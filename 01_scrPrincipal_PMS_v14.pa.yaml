@@ -5,6 +5,7 @@ Screens:
       LoadingSpinnerColor: =RGBA(0, 120, 212, 1)
       OnVisible: |+
         =Refresh(PMS_Usuarios);
+        ClearCollect(colNPSupervisores,AddColumns(Filter(PMS_Usuarios,Activo=true,RolGlobal.Value="Supervisor"),NombreVisible,Coalesce(Usuario.DisplayName,Título)));
         Set(gblCorreo,Lower(Trim(User().Email)));
         Set(gblPerfil,LookUp(PMS_Usuarios,CorreoNormalizado=gblCorreo));
         If(IsBlank(gblPerfil.ID),Set(gblPerfil,LookUp(PMS_Usuarios,Usuario.Email=gblCorreo)));
@@ -186,7 +187,7 @@ Screens:
                         Fill: =RGBA(6, 24, 143, 1)
                         Height: =38
                         OnSelect: |+
-                          =ClearCollect(colNPFISSeleccionadas,Filter(PMS_FIS,ID=0)); ClearCollect(colNPCompromisosSeleccionados,Filter(PMS_Compromisos,ID=0)); Set(varNPSelector,""); Set(gblCorreo,Lower(Trim(User().Email)));
+                          =ClearCollect(colNPFISSeleccionadas,Filter(PMS_FIS,ID=0)); ClearCollect(colNPCompromisosSeleccionados,Filter(PMS_Compromisos,ID=0)); Set(varNPSelector,""); Refresh(PMS_Usuarios); ClearCollect(colNPSupervisores,AddColumns(Filter(PMS_Usuarios,Activo=true,RolGlobal.Value="Supervisor"),NombreVisible,Coalesce(Usuario.DisplayName,Título))); Set(gblCorreo,Lower(Trim(User().Email)));
                           Set(gblPerfil,LookUp(PMS_Usuarios,CorreoNormalizado=gblCorreo));
                           If(IsBlank(gblPerfil.ID),Set(gblPerfil,LookUp(PMS_Usuarios,Usuario.Email=gblCorreo)));
                           Set(gblPuedeCrearProyecto,Coalesce(
@@ -1299,6 +1300,7 @@ Screens:
                                       =If(gblEsAdmin || (gblEsSupervisor && ThisItem.SupervisorCorreo=gblCorreo),
                                           Set(varPMProyectoAccion,ThisItem);
                                           Set(varPMAccion,"Editar");
+                                          Refresh(PMS_Usuarios); ClearCollect(colNPSupervisores,AddColumns(Filter(PMS_Usuarios,Activo=true,RolGlobal.Value="Supervisor"),NombreVisible,Coalesce(Usuario.DisplayName,Título)));
                                           Set(varNPEsEdicion,true); Set(varNPProyectoEditar,ThisItem); Set(varNPTab,"General"); Set(varNPSelector,""); Set(varNPReset,true); Set(varNPReset,false); Set(varMostrarNuevoProyecto,true),
                                           Notify("Sin permiso para editar este proyecto",NotificationType.Error))
                               - btnPMSFilaParalizarV6:
@@ -1560,7 +1562,7 @@ Screens:
                               Fill: =RGBA(6, 24, 143, 1)
                               Height: =42
                               OnSelect: |+
-                                =ClearCollect(colNPFISSeleccionadas,Filter(PMS_FIS,ID=0)); ClearCollect(colNPCompromisosSeleccionados,Filter(PMS_Compromisos,ID=0)); Set(varNPSelector,""); Set(gblCorreo,Lower(Trim(User().Email)));
+                                =ClearCollect(colNPFISSeleccionadas,Filter(PMS_FIS,ID=0)); ClearCollect(colNPCompromisosSeleccionados,Filter(PMS_Compromisos,ID=0)); Set(varNPSelector,""); Refresh(PMS_Usuarios); ClearCollect(colNPSupervisores,AddColumns(Filter(PMS_Usuarios,Activo=true,RolGlobal.Value="Supervisor"),NombreVisible,Coalesce(Usuario.DisplayName,Título))); Set(gblCorreo,Lower(Trim(User().Email)));
                                 Set(gblPerfil,LookUp(PMS_Usuarios,CorreoNormalizado=gblCorreo));
                                 If(IsBlank(gblPerfil.ID),Set(gblPerfil,LookUp(PMS_Usuarios,Usuario.Email=gblCorreo)));
                                 Set(gblPuedeCrearProyecto,Coalesce(
@@ -2050,6 +2052,7 @@ Screens:
                                       =If(gblEsAdmin || (gblEsSupervisor && ThisItem.SupervisorCorreo=gblCorreo),
                                           Set(varPMProyectoAccion,ThisItem);
                                           Set(varPMAccion,"Editar");
+                                          Refresh(PMS_Usuarios); ClearCollect(colNPSupervisores,AddColumns(Filter(PMS_Usuarios,Activo=true,RolGlobal.Value="Supervisor"),NombreVisible,Coalesce(Usuario.DisplayName,Título)));
                                           Set(varNPEsEdicion,true); Set(varNPProyectoEditar,ThisItem); Set(varNPTab,"General"); Set(varNPSelector,""); Set(varNPReset,true); Set(varNPReset,false); Set(varMostrarNuevoProyecto,true),
                                           Notify("Sin permiso para editar este proyecto",NotificationType.Error))
                               - btnPMSCardParalizarV6:
@@ -2811,7 +2814,7 @@ Screens:
 
                                     AccessibleLabel: ="Seleccionar Supervisor"
 
-                                    DisplayMode: =If(gblEsAdmin,DisplayMode.Edit,DisplayMode.View)
+                                    DisplayMode: =If(gblEsAdmin || (!varNPEsEdicion && gblPuedeCrearProyecto),DisplayMode.Edit,DisplayMode.View)
 
                                     BorderColor: =RGBA(207, 216, 231, 1)
                                     Color: =RGBA(17,36,63,1)
@@ -2820,12 +2823,12 @@ Screens:
                                     BorderThickness: =1
                                     ChevronBackground: =RGBA(255, 255, 255, 1)
                                     ChevronFill: =RGBA(50, 68, 105, 1)
-                                    DefaultSelectedItems: =If(varNPEsEdicion,Filter(PMS_Usuarios,CorreoNormalizado=varNPProyectoEditar.SupervisorCorreo),If(gblEsSupervisor,Filter(PMS_Usuarios,ID=gblPerfil.ID),Filter(PMS_Usuarios,ID=0)))
-                                    DisplayFields: =["Título"]
+                                    DefaultSelectedItems: =If(varNPEsEdicion,Filter(colNPSupervisores,CorreoNormalizado=varNPProyectoEditar.SupervisorCorreo),If(gblEsSupervisor,Filter(colNPSupervisores,ID=gblPerfil.ID),Filter(colNPSupervisores,ID=0)))
+                                    DisplayFields: =["NombreVisible"]
                                     Height: =44
-                                    Items: =Filter(PMS_Usuarios,Activo=true,RolGlobal.Value="Supervisor")
+                                    Items: =colNPSupervisores
                                     Reset: =varNPReset
-                                    SearchFields: =["Título"]
+                                    SearchFields: =["NombreVisible"]
                                     SelectMultiple: =false
                                     Size: =10
                                     Width: =If(App.Width<760,conNPGeneralV4.Width-32,(conNPGeneralV4.Width-64)/3)
@@ -4681,123 +4684,143 @@ Screens:
                                     Width: =If(App.Width<760,conNPVinculosV4.Width-32,(conNPVinculosV4.Width-64)/3)
                                     X: =If(App.Width<760,16,2*(conNPVinculosV4.Width-64)/3+48)
                                     Y: =If(App.Width<760,979,523)
-                              - lblNPRespTecnicoV4:
-                                  Control: Label@2.5.1
+                              - conNPResponsablesV14:
+                                  Control: GroupContainer@1.5.0
+                                  Variant: ManualLayout
                                   Properties:
-                                    TabIndex: =-1
-
-                                    Color: =RGBA(62, 76, 101, 1)
-                                    FontWeight: =FontWeight.Semibold
-                                    Height: =20
-                                    Size: =9
-                                    Text: ="RESPONSABLE TÉCNICO"
-                                    Width: =If(App.Width<760,conNPVinculosV4.Width-32,(conNPVinculosV4.Width-48)/2)
-                                    X: =16
-                                    Y: =ddNPAreaOrgV4.Y+ddNPAreaOrgV4.Height+13
-                              - txtNPRespTecnicoV4:
-                                  Control: Classic/TextInput@2.3.2
-                                  Properties:
-                                    FocusedBorderColor: =RGBA(0,120,212,1)
-
-                                    FocusedBorderThickness: =2
-
-                                    TabIndex: =0
-
-                                    AccessibleLabel: ="Ingresar Resp Tecnico"
-
-                                    BorderColor: =RGBA(207, 216, 231, 1)
-                                    BorderThickness: =1
-                                    Default: =If(varNPEsEdicion,Text(varNPProyectoEditar.ResponsableTecnicoNombre),"")
-                                    Height: =42
-                                    HintText: ="Nombre"
-                                    HoverBorderColor: =RGBA(46, 105, 230, 1)
-                                    RadiusBottomLeft: =7
-                                    RadiusBottomRight: =7
-                                    RadiusTopLeft: =7
-                                    RadiusTopRight: =7
-                                    Reset: =varNPReset
-                                    Size: =10
-                                    Width: =If(App.Width<760,conNPVinculosV4.Width-32,(conNPVinculosV4.Width-48)/2)
-                                    X: =16
-                                    Y: =lblNPRespTecnicoV4.Y+lblNPRespTecnicoV4.Height+1
-                              - lblNPRespSocialV4:
-                                  Control: Label@2.5.1
-                                  Properties:
-                                    TabIndex: =-1
-
-                                    Color: =RGBA(62, 76, 101, 1)
-                                    FontWeight: =FontWeight.Semibold
-                                    Height: =20
-                                    Size: =9
-                                    Text: ="RESPONSABLE SOCIAL"
-                                    Width: =If(App.Width<760,conNPVinculosV4.Width-32,(conNPVinculosV4.Width-48)/2)
-                                    X: =If(App.Width<760,16,conNPVinculosV4.Width/2+8)
-                                    Y: =If(App.Width<760,txtNPRespTecnicoV4.Y+txtNPRespTecnicoV4.Height+13,lblNPRespTecnicoV4.Y)
-                              - txtNPRespSocialV4:
-                                  Control: Classic/TextInput@2.3.2
-                                  Properties:
-                                    FocusedBorderColor: =RGBA(0,120,212,1)
-
-                                    FocusedBorderThickness: =2
-
-                                    TabIndex: =0
-
-                                    AccessibleLabel: ="Ingresar Resp Social"
-
-                                    BorderColor: =RGBA(207, 216, 231, 1)
-                                    BorderThickness: =1
-                                    Default: =If(varNPEsEdicion,Text(varNPProyectoEditar.ResponsableSocialNombre),"")
-                                    Height: =42
-                                    HintText: ="Nombre"
-                                    HoverBorderColor: =RGBA(46, 105, 230, 1)
-                                    RadiusBottomLeft: =7
-                                    RadiusBottomRight: =7
-                                    RadiusTopLeft: =7
-                                    RadiusTopRight: =7
-                                    Reset: =varNPReset
-                                    Size: =10
-                                    Width: =If(App.Width<760,conNPVinculosV4.Width-32,(conNPVinculosV4.Width-48)/2)
-                                    X: =If(App.Width<760,16,conNPVinculosV4.Width/2+8)
-                                    Y: =lblNPRespSocialV4.Y+lblNPRespSocialV4.Height+1
-                              - lblNPEnlaceV4:
-                                  Control: Label@2.5.1
-                                  Properties:
-                                    TabIndex: =-1
-
-                                    Color: =RGBA(62, 76, 101, 1)
-                                    FontWeight: =FontWeight.Semibold
-                                    Height: =20
-                                    Size: =9
-                                    Text: ="LINK DE REFERENCIA"
+                                    Fill: =RGBA(255,255,255,0)
+                                    Height: =If(App.Width<760,148,72)
                                     Width: =conNPVinculosV4.Width-32
                                     X: =16
-                                    Y: =Max(txtNPRespTecnicoV4.Y+txtNPRespTecnicoV4.Height,txtNPRespSocialV4.Y+txtNPRespSocialV4.Height)+32
-                              - txtNPEnlaceV4:
-                                  Control: Classic/TextInput@2.3.2
+                                    Y: =If(App.Width<760,1034,578)
+                                  Children:
+                                    - lblNPRespTecnicoV4:
+                                        Control: Label@2.5.1
+                                        Properties:
+                                          TabIndex: =-1
+
+                                          Color: =RGBA(62, 76, 101, 1)
+                                          FontWeight: =FontWeight.Semibold
+                                          Height: =20
+                                          Size: =9
+                                          Text: ="RESPONSABLE TÉCNICO"
+                                          Width: =If(App.Width<760,Parent.Width,(Parent.Width-16)/2)
+                                          X: =0
+                                          Y: =0
+                                    - txtNPRespTecnicoV4:
+                                        Control: Classic/TextInput@2.3.2
+                                        Properties:
+                                          FocusedBorderColor: =RGBA(0,120,212,1)
+
+                                          FocusedBorderThickness: =2
+
+                                          TabIndex: =0
+
+                                          AccessibleLabel: ="Ingresar Resp Tecnico"
+
+                                          BorderColor: =RGBA(207, 216, 231, 1)
+                                          BorderThickness: =1
+                                          Default: =If(varNPEsEdicion,Text(varNPProyectoEditar.ResponsableTecnicoNombre),"")
+                                          Height: =42
+                                          HintText: ="Nombre"
+                                          HoverBorderColor: =RGBA(46, 105, 230, 1)
+                                          RadiusBottomLeft: =7
+                                          RadiusBottomRight: =7
+                                          RadiusTopLeft: =7
+                                          RadiusTopRight: =7
+                                          Reset: =varNPReset
+                                          Size: =10
+                                          Width: =If(App.Width<760,Parent.Width,(Parent.Width-16)/2)
+                                          X: =0
+                                          Y: =21
+                                    - lblNPRespSocialV4:
+                                        Control: Label@2.5.1
+                                        Properties:
+                                          TabIndex: =-1
+
+                                          Color: =RGBA(62, 76, 101, 1)
+                                          FontWeight: =FontWeight.Semibold
+                                          Height: =20
+                                          Size: =9
+                                          Text: ="RESPONSABLE SOCIAL"
+                                          Width: =If(App.Width<760,Parent.Width,(Parent.Width-16)/2)
+                                          X: =If(App.Width<760,0,Parent.Width/2+8)
+                                          Y: =If(App.Width<760,76,0)
+                                    - txtNPRespSocialV4:
+                                        Control: Classic/TextInput@2.3.2
+                                        Properties:
+                                          FocusedBorderColor: =RGBA(0,120,212,1)
+
+                                          FocusedBorderThickness: =2
+
+                                          TabIndex: =0
+
+                                          AccessibleLabel: ="Ingresar Resp Social"
+
+                                          BorderColor: =RGBA(207, 216, 231, 1)
+                                          BorderThickness: =1
+                                          Default: =If(varNPEsEdicion,Text(varNPProyectoEditar.ResponsableSocialNombre),"")
+                                          Height: =42
+                                          HintText: ="Nombre"
+                                          HoverBorderColor: =RGBA(46, 105, 230, 1)
+                                          RadiusBottomLeft: =7
+                                          RadiusBottomRight: =7
+                                          RadiusTopLeft: =7
+                                          RadiusTopRight: =7
+                                          Reset: =varNPReset
+                                          Size: =10
+                                          Width: =If(App.Width<760,Parent.Width,(Parent.Width-16)/2)
+                                          X: =If(App.Width<760,0,Parent.Width/2+8)
+                                          Y: =If(App.Width<760,97,21)
+                              - conNPEnlaceV14:
+                                  Control: GroupContainer@1.5.0
+                                  Variant: ManualLayout
                                   Properties:
-                                    FocusedBorderColor: =RGBA(0,120,212,1)
-
-                                    FocusedBorderThickness: =2
-
-                                    TabIndex: =0
-
-                                    AccessibleLabel: ="Ingresar Enlace"
-
-                                    BorderColor: =RGBA(207, 216, 231, 1)
-                                    BorderThickness: =1
-                                    Default: =If(varNPEsEdicion,Text(varNPProyectoEditar.EnlaceReferencia),"")
-                                    Height: =42
-                                    HintText: ="https://... (opcional)"
-                                    HoverBorderColor: =RGBA(46, 105, 230, 1)
-                                    RadiusBottomLeft: =7
-                                    RadiusBottomRight: =7
-                                    RadiusTopLeft: =7
-                                    RadiusTopRight: =7
-                                    Reset: =varNPReset
-                                    Size: =10
+                                    Fill: =RGBA(255,255,255,0)
+                                    Height: =70
                                     Width: =conNPVinculosV4.Width-32
                                     X: =16
-                                    Y: =lblNPEnlaceV4.Y+lblNPEnlaceV4.Height+4
+                                    Y: =If(App.Width<760,1210,674)
+                                  Children:
+                                    - lblNPEnlaceV4:
+                                        Control: Label@2.5.1
+                                        Properties:
+                                          TabIndex: =-1
+
+                                          Color: =RGBA(62, 76, 101, 1)
+                                          FontWeight: =FontWeight.Semibold
+                                          Height: =20
+                                          Size: =9
+                                          Text: ="LINK DE REFERENCIA"
+                                          Width: =Parent.Width
+                                          X: =0
+                                          Y: =0
+                                    - txtNPEnlaceV4:
+                                        Control: Classic/TextInput@2.3.2
+                                        Properties:
+                                          FocusedBorderColor: =RGBA(0,120,212,1)
+
+                                          FocusedBorderThickness: =2
+
+                                          TabIndex: =0
+
+                                          AccessibleLabel: ="Ingresar Enlace"
+
+                                          BorderColor: =RGBA(207, 216, 231, 1)
+                                          BorderThickness: =1
+                                          Default: =If(varNPEsEdicion,Text(varNPProyectoEditar.EnlaceReferencia),"")
+                                          Height: =42
+                                          HintText: ="https://... (opcional)"
+                                          HoverBorderColor: =RGBA(46, 105, 230, 1)
+                                          RadiusBottomLeft: =7
+                                          RadiusBottomRight: =7
+                                          RadiusTopLeft: =7
+                                          RadiusTopRight: =7
+                                          Reset: =varNPReset
+                                          Size: =10
+                                          Width: =Parent.Width
+                                          X: =0
+                                          Y: =24
                   - conNPSelectorFISV12:
                       Control: GroupContainer@1.5.0
                       Variant: ManualLayout
